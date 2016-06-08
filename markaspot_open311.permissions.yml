@@ -1,0 +1,9 @@
+'access open311 extension':
+  title: 'Access Open311 Extended Feature'
+  description: 'Retrieve extended properties'
+#'access GET georeport resource':
+#  title: 'GET Georeport Requests Resource'
+#  description: 'Retrieve Open311 Service Requests'
+#'access POST georeport resource':
+#  title: 'POST Georeport Requests Resource'
+#  description: 'Submit Open311 Service Requests'

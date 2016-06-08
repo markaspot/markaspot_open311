@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * Contains markaspot_open311.module
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+
+function markaspot_open311_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the markaspot_open311 module.
+    case 'help.page.markaspot_open311':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('GeoReport v2 Endpoint') . '</p>';
+      return $output;
+    break;
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+
+function markaspot_open311_theme()
+{
+  $theme = [];
+
+  return $theme;
+}
+/*
+function markaspot_open311_rest_resource_alter(&$definitions) {
+
+  if (isset($definitions['georeport_request_resource'])) {
+    // We want to handle REST requests regarding nodes with our own plugin
+    // class.
+    $definitions['entity:node']['class'] = 'Drupal\markaspot_open311\Plugin\rest\resource\GeoreportRequestResource';
+    // Serialized nodes should be expanded to my specific node class.
+    $definitions['entity:node']['serialization_class'] = 'Drupal\markaspot_open311\Entity\Georeport';
+  }
+  // We don't want Views to show up in the array of plugins at all.
+  unset($definitions['entity:view']);
+}
+*/

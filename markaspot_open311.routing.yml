@@ -1,0 +1,58 @@
+markaspot_open311.default_controller:
+  path: 'markaspot_open311/{name}'
+  defaults:
+    _controller: '\Drupal\markaspot_open311\Controller\DefaultController::hello'
+    _title: 'markaspot_open311 Title'
+  requirements:
+    _permission: 'access content'
+
+markaspot_open311.settings:
+  path: '/admin/structure/markaspot/open311/settings'
+  defaults:
+    _form: '\Drupal\markaspot_open311\Form\MarkaspotOpen311SettingsForm'
+    _title: 'Hello 311'
+  requirements:
+    _permission: 'administer site configuration'
+
+
+
+# markaspot_open311.requests.json:
+ # path: '/georeport/v2/requests.json'
+
+ #defaults:
+ #  _format: json
+ #  _controller: '\Drupal\markaspot_open311\Controller\DefaultController::requests'
+ #  _title: 'IndexJSON'
+ #requirements:
+ #   _permission: 'access content'
+
+#markaspot_open311.requests.xml:
+#  path: '/georeport/v2/requests.xml'
+
+#  defaults:
+#   _format: xml
+#   _controller: '\Drupal\markaspot_open311\Controller\DefaultController::requests'
+#  _title: 'IndexXML'
+#  requirements:
+#   _permission: 'access content'
+
+  #defaults:
+  # _controller: '\Drupal\markaspot_open311\Controller\RequestsController::getRequestsAction'
+  #_title: 'Index'
+  #requirements:
+   # _permission: 'access content'
+
+
+
+  ##
+  # alternativ
+
+  #defaults:
+   # _controller: '\Drupal\markaspot_open311\RequestHandler::handle'
+   # _call: '\Drupal\markaspot_open311\RestCalls\Requests'
+   # _format: json
+
+  #requirements:
+   # _permission: 'access content'
+  #options:
+    #_auth: [ 'basic_auth' ]
