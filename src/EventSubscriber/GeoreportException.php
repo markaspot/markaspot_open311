@@ -7,13 +7,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Drupal\rest\Plugin\ResourceBase as ResourceExceptionBase;
 use Symfony\Component\HttpFoundation\Response;
 
 use Drupal\rest\ResourceResponse;
 
-class GeoreportException implements EventSubscriberInterface
-{
+class GeoreportException implements EventSubscriberInterface {
 
   private $request;
 
@@ -33,9 +31,12 @@ class GeoreportException implements EventSubscriberInterface
   public function onException(GetResponseForExceptionEvent $event) {
 
     $exception = $event->getException();
+    $current_path = \Drupal::service('path.current')->getPath();
 
-    if (strstr($this->request->getRequestUri(), 'georeport/v')) {
+    if (strstr($current_path, 'georeport')) {
+
       $exceptionCode = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : $exception->getCode();
+
       $data = array(
         'error' => array(
           'code' => $exceptionCode,
@@ -43,14 +44,9 @@ class GeoreportException implements EventSubscriberInterface
         )
       );
 
-
-      $current_path = \Drupal::service('path.current')->getPath();
-
-      if (strstr($current_path, 'georeport')) {
-        $request_format = pathinfo($current_path, PATHINFO_EXTENSION);
-      }
-
+      $request_format = pathinfo($current_path, PATHINFO_EXTENSION);
       $request_format = isset($request_format) ? $request_format : 'html';
+
       if ($request_format == 'json' ||$request_format == 'xml' ){
         $content = \Drupal::service('serializer')->serialize($data, $request_format);
       } else {
