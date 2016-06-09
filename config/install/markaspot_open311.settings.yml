@@ -14,28 +14,7 @@ tax_category: service_category
 tax_status: service_status
 # REST Resources
 resources:
-  'entity:node':
-    GET:
-      supported_formats:
-        - hal_json
-      supported_auth:
-        - basic_auth
-    POST:
-      supported_formats:
-        - hal_json
-      supported_auth:
-        - basic_auth
-    PATCH:
-      supported_formats:
-        - hal_json
-      supported_auth:
-        - basic_auth
-    DELETE:
-      supported_formats:
-        - hal_json
-      supported_auth:
-        - basic_auth
-  georeport_request_index_resource:
+  'georeport_request_index_resource':
     GET:
       supported_formats:
         - xml
