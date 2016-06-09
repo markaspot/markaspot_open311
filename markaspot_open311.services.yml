@@ -1,6 +1,6 @@
 services:
   markaspot_open311.serializer.encoder.xml:
-    class: Drupal\markaspot_open311\Encoder\XmlEncoder
+    class: Drupal\markaspot_open311\Encoder\GeoreportXmlEncoder
     tags:
       - { name: encoder, format: xml }
 
@@ -12,10 +12,10 @@ services:
     tags:
       - { name: route_filter }
 
-  markaspot_open311.serializer.encoder.form:
-    class: Drupal\markaspot_open311\Encoder\XmlEncoder
-    tags:
-      - { name: encoder, format: form }
+  # markaspot_open311.serializer.encoder.form:
+  #  class: Drupal\markaspot_open311\Encoder\XmlEncoder
+  #  tags:
+  #    - { name: encoder, format: form }
 
   # markaspot_open311.serializer.normalizer.form:
   #  class: Drupal\markaspot_open311\Serializer\GeoreportPostNormalizer
