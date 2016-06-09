@@ -163,15 +163,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
       throw new AccessDeniedHttpException("Unauthorized can't proceed with create_request.");
     }
     */
-    // var_dump($this->currentUser->getRoles());
-
-    // $request = \Drupal::request()->getRequestFormat();
-    // $queryString = \Drupal::request()->getQueryString();
-
     $parameters = UrlHelper::filterQueryParameters(\Drupal::request()->query->all());
-    // $limit = UrlHelper::parse(\Drupal::request()->getQueryString();
-    // $_POST parameters
-    // $request->request->get('name');
 
     // Filtering the configured content type.
     $bundle = $this->config->get('bundle');
@@ -183,14 +175,18 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
     $query->sort('changed', 'desc');
      // Checking for a limit parameter:
-    // $limit_undefined = ($is_admin == true) ? NULL : 50;
-    $limit = 50;
-    // $limit = $parameters['limit'];
-    // $limit = (isset($limit) &&  $limit<= 100) ? $limit : $hard_limit;
+
+
+    $is_admin = ($parameters['key'] == \Drupal::state()->get('system.cron_key'));
+    // Handle limit parameters for user one and other users
+    $limit = ($is_admin) ? NULL : 25;
+    $query_limit = $parameters['limit'];
+    $limit = (isset($query_limit) &&  $query_limit <= 50) ? $query_limit : $limit;
     if ($limit) {
       $query->pager($limit);
     }
 
+    // Process params to Drupal.
     $map = new GeoreportProcessor;
 
     // Checking for service_code and map the code with taxonomy terms:
@@ -232,7 +228,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
     }
     if (!empty($service_requests)) {
       $response = new ResourceResponse($service_requests, 200);
-      // $response->addCacheableDependency($service_requests);
+      $response->addCacheableDependency($service_requests);
 
       return $response;
     } else {
