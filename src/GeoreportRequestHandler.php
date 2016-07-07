@@ -47,12 +47,11 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
       ->getInstance(array('id' => $plugin));
     // Deserialize incoming data if available.
     $serializer = $this->container->get('serializer');
-
+    // Get body for Post requests.
     $received = $request->getContent();
     $unserialized = NULL;
     if (!empty($received)) {
       $format = $request->getContentType();
-      // var_dump("Format", $format);
 
       // Only allow serialization formats that are explicitly configured. If no
       // formats are configured allow all and hope that the serializer knows the
@@ -62,7 +61,7 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
       $method_settings = $config[$plugin][$request->getMethod()];
       if (empty($method_settings['supported_formats']) || in_array($format, $method_settings['supported_formats'])) {
         $definition = $resource->getPluginDefinition();
-        $class = $definition['serialization_class'];
+        // $class = $definition['serialization_class'];
         try {
           $service_request = [];
           // create service_request data from parameters;

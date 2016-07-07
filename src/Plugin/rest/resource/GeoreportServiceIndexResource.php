@@ -7,19 +7,13 @@
 
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
-use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Drupal\Component\Utility\UrlHelper;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Provides a resource to get view modes by entity and bundle.
@@ -67,11 +61,10 @@ class GeoreportServiceIndexResource extends ResourceBase {
     LoggerInterface $logger,
     AccountProxyInterface $current_user) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $logger);
-    $this->config = \Drupal::configFactory()->getEditable('markaspot_open311.settings');
+    $this->config = \Drupal::configFactory()
+      ->getEditable('markaspot_open311.settings');
     $this->currentUser = $current_user;
   }
-
-
 
   /**
    * {@inheritdoc}
@@ -93,7 +86,7 @@ class GeoreportServiceIndexResource extends ResourceBase {
           foreach ($georeport_formats as $format) {
             $format_route = clone $route;
 
-            $format_route->setPath($create_path  . '.' . $format);
+            $format_route->setPath($create_path . '.' . $format);
             $format_route->setRequirement('_access_rest_csrf', 'FALSE');
 
             // Restrict the incoming HTTP Content-type header to the known
@@ -103,6 +96,7 @@ class GeoreportServiceIndexResource extends ResourceBase {
             $collection->add("$route_name.$method.$format", $format_route);
           }
           break;
+
         case 'GET':
           // Restrict GET and HEAD requests to the media type specified in the
           // HTTP Accept headers.
@@ -112,13 +106,13 @@ class GeoreportServiceIndexResource extends ResourceBase {
 
               // Expose one route per available format.
               $format_route = clone $route;
-              // create path with format.name
+              // Create path with format.name.
               $format_route->setPath($format_route->getPath() . '.' . $geo_format);
               $collection->add("$route_name.$method.$geo_format", $format_route);
             }
 
           }
-        break;
+          break;
 
         default:
           $collection->add("$route_name.$method", $route);
@@ -127,7 +121,6 @@ class GeoreportServiceIndexResource extends ResourceBase {
     }
     return $collection;
   }
-
 
   /**
    * {@inheritdoc}
@@ -143,7 +136,6 @@ class GeoreportServiceIndexResource extends ResourceBase {
     );
   }
 
-
   /**
    * Responds to GET requests.
    *
@@ -154,65 +146,24 @@ class GeoreportServiceIndexResource extends ResourceBase {
    */
   public function get() {
 
-
-
-    $map = new GeoreportProcessor;
-    $services = $map->markaspot_open311_get_taxonomy_tree('service_category');
-    
-    $response = new ResourceResponse($services, 200);
-
-    return $response;
-
-    // Checking for service_code and map the code with taxonomy terms:
-    if (isset($parameters['service_code'])) {
-      // Get the service of the current node:
-      $tid = $map->markaspot_open311_service_map_tax($parameters['service_code']);
-      $query->condition('field_category.entity.tid', $tid);
-    }
-
-    // Checking for service_code and map the code with taxonomy terms:
-    if (isset($parameters['id'])) {
-      // Get the service of the current node:
-      $query->condition('uuid', $parameters['id']);
-    }
-
-    $nids = $query->execute();
-
-    $nodes = \Drupal::entityTypeManager()
-      ->getStorage('node')
-      ->loadMultiple($nids);
-
-
-    // Extensions.
-    $extensions = [];
-    if (isset($parameters['extensions'])) {
-      $extendend_permission = 'access open311 extension';
-      if ($this->currentUser->hasPermission($extendend_permission)) {
-        $extensions = array('anonymous', 'role');
-      }
-      else {
-        $extensions = array('anonymous');
-      }
-    }
-
-    // Building requests array.
-    $service_requests = [];
-
-    foreach ($nodes as $node) {
-      $status = "closed";
-      $service_requests[] = $map->node_map_request($node, $extensions);
-    }
-    if (!empty($service_requests)) {
-      $response = new ResourceResponse($service_requests, 200);
-      $response->addCacheableDependency($service_requests);
-
+    $map = new GeoreportProcessor();
+    $services = $map->getTaxonomyTree('service_category');
+    if (!empty($services)) {
+      $response = new ResourceResponse($services, 200);
+      $response->addCacheableDependency($services);
       return $response;
-    } else {
+    }
+    else {
       throw  new \Exception("No Service requests found", 404);
     }
   }
 
-
+  /**
+   * @param string $canonical_path
+   * @param string $method
+   *
+   * @return \Symfony\Component\Routing\Route
+   */
   protected function getBaseRoute($canonical_path, $method) {
     $lower_method = strtolower($method);
 

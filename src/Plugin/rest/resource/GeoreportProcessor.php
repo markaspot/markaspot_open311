@@ -1,44 +1,58 @@
 <?php
-/**
- * @file
- * Several methods for mapping drupal entities and georeport specification.
- */
 
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
 use Drupal\taxonomy\Entity\Term;
 
-
+/**
+ * Class GeoreportProcessor parsing.
+ *
+ * @package Drupal\markaspot_open311\Plugin\rest\resource
+ */
 class GeoreportProcessor {
 
+  /**
+   * Load Open311 config.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
   protected $config;
 
-  function  __construct (){
-    $this->config = \Drupal::configFactory()->getEditable('markaspot_open311.settings');
+  /**
+   * GeoreportProcessor constructor.
+   */
+  public function __construct() {
+    $this->config = \Drupal::configFactory()
+      ->getEditable('markaspot_open311.settings');
   }
-
 
   /**
    * Process errors with http status codes.
    *
    * @param string $message
-   *   The error message
-   *
+   *   The error message.
    * @param int $code
-   *   The http status/error code
+   *   The http status/error code.
+   *
+   * @throws \Exception
+   *   Throwing an exception which is reformatted by event subscriber.
    */
-  public function process_services_error($message, $code) {
+  public function processsServicesError($message, $code) {
     throw new \Exception($message, $code);
   }
 
   /**
-   * Get Taxononmy Term Fields
-   * 
+   * Get Taxononmy Term Fields.
+   *
    * @param int $tid
+   *    The Term id.
    * @param string $field_name
+   *    The field name.
+   *
    * @return mixed
+   *    returns the term.
    */
-  public function get_term($tid, $field_name) {
+  public function getTerm($tid, $field_name) {
     // var_dump(Term::load(4)->get('name')->value);
     // http://drupalapi.de/api/drupal/drupal%21core%21modules%21taxonomy%21taxonomy.module/function/taxonomy_term_load/drupal-8
     if (isset($tid) && Term::load($tid) != '') {
@@ -47,20 +61,38 @@ class GeoreportProcessor {
   }
 
   /**
-   * @param $node
-   * @param $extended
-   * @return mixed
+   * Map the node object as georeport request.
+   *
+   * @param object $node
+   *    The node object.
+   * @param string $extended
+   *    The extended parameter allows rendering additional fields.
+   * @param boolean $uuid
+   *    Using node-uuid or node-nid
+   *
+   * @return array
+   *    Return the $request array.
    */
-  public function node_map_request($node, $extended) {
-    $request['sevicerequest_id'] = $node->uuid->value;
+  public function nodeMapRequest($node, $extended, $uuid) {
+    if ($uuid !== FALSE) {
+      $id = $node->uuid->value;
+    }
+    else {
+      $id = $node->nid->value;
+    }
+    $request['sevicerequest_id'] = $id;
+
     $request['title'] = $node->title->value;
     $request['description'] = $node->body->value;
 
     $request['lat'] = floatval($node->field_geolocation->lat);
     $request['long'] = floatval($node->field_geolocation->lng);
 
-    $request['status'] = $this->tax_map_status($node->field_status->target_id);
-    $request['service_name'] = $this->get_term($node->field_category->target_id, 'name');
+    $request['status'] = $this->taxMapStatus($node->field_status->target_id);
+    $request['service_name'] = $this->getTerm($node->field_category->target_id, 'name');
+
+    $request['requested_datetime'] = date('c', $node->created->value);
+    $request['updated_datetime'] = date('c', $node->changed->value);
 
     // Media Url:
     if (isset($node->field_image->fid)) {
@@ -68,16 +100,17 @@ class GeoreportProcessor {
       $request['media_url'] = $image_uri;
     }
 
-    $service_code = $this->get_term($node->field_category->target_id, 'field_service_code');
-    $request['service_code'] = isset($service_code) ? $service_code : Null;
+    $service_code = $this->getTerm($node->field_category->target_id, 'field_service_code');
+    $request['service_code'] = isset($service_code) ? $service_code : NULL;
 
     if (in_array('anonymous', $extended)) {
-      if(\Drupal::moduleHandler()->moduleExists('service_request')){
+      if (\Drupal::moduleHandler()->moduleExists('service_request')) {
         $request['extended_attributes']['markaspot'] = $extended;
+        $request['extended_attributes']['markaspot']['nid'] = $node->nid->value;
         $request['extended_attributes']['markaspot']['category_hex'] = Term::load($node->field_category->target_id)->field_category_hex->color;
         $request['extended_attributes']['markaspot']['category_icon'] = Term::load($node->field_category->target_id)->field_category_icon->value;
-        $request['extended_attributes']['markaspot']['status_hex'] = Term::load($node->field_category->target_id)->field_category_hex->color;
-        $request['extended_attributes']['markaspot']['status_icon'] = Term::load($node->field_category->target_id)->field_category_icon->value;
+        $request['extended_attributes']['markaspot']['status_hex'] = Term::load($node->field_status->target_id)->field_status_hex->color;
+        $request['extended_attributes']['markaspot']['status_icon'] = Term::load($node->field_status->target_id)->field_status_icon->value;
       }
     }
 
@@ -87,33 +120,39 @@ class GeoreportProcessor {
     return $request;
   }
 
-
   /**
-   * Prepare Node properties 
-   * 
+   * Prepare Node properties.
+   *
    * @param array $request_data
-   *    Georeport Request data via form urlencoded
+   *    Georeport Request data via form urlencoded.
+   *
    * @return array
-   *    values to be saved via entity api
+   *    values to be saved via entity api.
    */
-  public function request_map_node($request_data) {
+  public function requestMapNode($request_data) {
 
-    $values['type']                     = 'service_request';
-    $values['title']                    = $request_data['service_code'];
-    $values['body']                     = $request_data['description'];
-    $values['field_email']              = $request_data['email'];
+    $values['type'] = 'service_request';
+    $values['title'] = $request_data['service_code'];
+    $values['body'] = $request_data['description'];
+    $values['field_email'] = $request_data['email'];
     $values['field_geolocation']['lat'] = $request_data['lat'];
     $values['field_geolocation']['lng'] = $request_data['long'];
-    $values['field_category']['target_id'] = $this->service_map_tax($request_data['service_code']);
+
+    // Get Category by service_code.
+    $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
+    // Status when inserting.
+    $status_open = array_values($this->config->get('status_open_start'));
+    $values['field_status']['target_id'] = $status_open[0];
 
     // File Handling:
     if (isset($request_data['media_url']) && strstr($request_data['media_url'], "http")) {
       $managed = TRUE;
-      $file = system_retrieve_file($request_data['media_url'], 'public://', $managed, FILE_EXISTS_REPLACE);
-
-      $values['field_image'] = array(
-        'target_id' => $file->id(),
-      );
+      $file = system_retrieve_file($request_data['media_url'], 'public://', $managed, FILE_EXISTS_RENAME);
+      if ($file !== FALSE) {
+        $values['field_image'] = array(
+          'target_id' => $file->id(),
+        );
+      }
 
     }
 
@@ -121,28 +160,28 @@ class GeoreportProcessor {
   }
 
   /**
-   * Returns renderable array of taxonomy terms from Categories vocabulary in
-   * hierarchical structure ready to be rendered as html list.
+   * Returns renderable array of taxonomy terms from Categories vocabulary.
    *
+   * @param string $vocabulary
+   *   The taxonomy vocabulary.
    * @param int $parent
    *   The ID of the parent taxonomy term.
-   *
    * @param int $max_depth
    *   The max depth up to which to look up children.
    *
-   * @param string $route_name
-   *   The name of the route to be used for link generation.
-   *   Taxonomy term(ID) will be provided as route parameter.
-   *
-   * @return array
+   * @return array $services
+   *   Return the drupal taxonomy term as a georeport service.
    */
-  function get_taxonomy_tree($vocabulary = "tags", $parent = 0, $max_depth = NULL) {
-    // Load terms
-    $tree = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree($vocabulary, $parent, $max_depth);
+  public function getTaxonomyTree($vocabulary = "tags", $parent = 0, $max_depth = NULL) {
+    // Load terms.
+    $tree = \Drupal::entityTypeManager()
+      ->getStorage('taxonomy_term')
+      ->loadTree($vocabulary, $parent, $max_depth);
 
     $entity_type_id = 'taxonomy_term';
     $bundle = $vocabulary;
-    foreach (\Drupal::entityManager()->getFieldDefinitions($entity_type_id, $bundle) as $field_name => $field_definition) {
+    foreach (\Drupal::entityTypeManager()
+               ->getFieldDefinitions($entity_type_id, $bundle) as $field_name => $field_definition) {
       if (!empty($field_definition->getTargetBundle())) {
         $bundleFields[$entity_type_id][$field_name]['type'] = $field_definition->getType();
         $bundleFields[$entity_type_id][$field_name]['label'] = $field_definition->getLabel();
@@ -151,16 +190,14 @@ class GeoreportProcessor {
 
     // var_dump($bundleFields);
 
-
-
     // Make sure there are terms to work with.
     if (empty($tree)) {
       return [];
     }
 
-    foreach ($tree AS $term) {
+    foreach ($tree as $term) {
       // var_dump($term);
-      $services[] = $this->tax_map_service($term->tid);
+      $services[] = $this->taxMapService($term->tid);
     }
 
     return $services;
@@ -169,25 +206,28 @@ class GeoreportProcessor {
   /**
    * Mapping taxonomies to services.
    *
-   * @param object $taxonomy_term
-   *   The taxonomy term.
+   * @param object $tid
+   *   The taxonomy term id.
    *
    * @return object
    *   $service: The service object
    */
-  function tax_map_service($tid) {
+  public function taxMapService($tid) {
 
     // Load all field for this taxonomy term:
-    $service_category = \Drupal::entityManager()->getStorage('taxonomy_term')->load($tid);
+    $service_category = \Drupal::entityTypeManager()
+      ->getStorage('taxonomy_term')
+      ->load($tid);
 
     $service['service_code'] = $service_category->field_service_code->value;
     $service['service_name'] = $service_category->name;
     $service['metadata'] = "false";
     $service['type'] = 'realtime';
     $service['description'] = $service_category->description->value;
-    if (isset($service_category->field_keywords)){
+    if (isset($service_category->field_keywords)) {
       $service['keywords'] = $service_category->field_keywords->value;
-    } else {
+    }
+    else {
       $service['keywords'] = "";
     }
     foreach ($service_category as $key => $value) {
@@ -195,7 +235,6 @@ class GeoreportProcessor {
     }
     return $service;
   }
-
 
   /**
    * Mapping requested service_code to drupal taxonomy.
@@ -206,26 +245,59 @@ class GeoreportProcessor {
    * @return int
    *   The TaxonomyId
    */
-  public function service_map_tax($service_code) {
+  public function serviceMapTax($service_code) {
 
     $terms = \Drupal::entityTypeManager()
       ->getStorage('taxonomy_term')
       ->loadByProperties(array('field_service_code' => $service_code));
-      $term = reset($terms);
+    $term = reset($terms);
     if ($term != FALSE) {
       $tid = $term->tid->value;
       return $tid;
-    } else {
-      $this->process_services_error('Servicecode not found', 404);
+    }
+    else {
+      $this->processsServicesError('Servicecode not found', 404);
+    }
+    return FALSE;
+  }
+
+  /**
+   * Mapping requested status to drupal taxonomy.
+   *
+   * @param string $status_sub
+   *   Custom Service status (can be open, closed, or foreign translated term name).
+   *
+   * @return int
+   *   The tid
+   */
+  public function statusMapTax($status_sub) {
+    //
+    // todo: Maap this for update method.
+    //
+    $terms = \Drupal::entityTypeManager()
+      ->getStorage('taxonomy_term')
+      ->loadByProperties(array('field_status_name' => $status_sub));
+    $term = reset($terms);
+    if ($term != FALSE) {
+      $tid = $term->tid->value;
+      return $tid;
+    }
+    else {
+      $this->processsServicesError('Status not found', 404);
+      return FALSE;
     }
   }
 
   /**
-   * Mapping taxonomy to status.
+   * Mapping taxonomy to status. GeoReport v2 has only open and closed status.
    *
-   * geoReport v2 has only open and closed status
+   * @param int $taxonomy_id
+   *   The Drupal Taxonomy ID.
+   *
+   * @return string $status
+   *   Return Open or Closed Status according to specification.
    */
-  function tax_map_status($taxonomy_id) {
+  public function taxMapStatus($taxonomy_id) {
     // Mapping Status to Open311 Status (open/closed)
     $status_open = array_values($this->config->get('status_open'));
     if (in_array($taxonomy_id, $status_open)) {

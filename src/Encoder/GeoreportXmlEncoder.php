@@ -49,4 +49,30 @@ class GeoreportXmlEncoder extends XmlEncoder implements  EncoderInterface {
     return $this->getBaseEncoder()->encode($data, $format, $context);
   }
 
+
+  /**
+   * Selects the type of node to create and appends it to the parent.
+   *
+   * @param \DOMNode     $parentNode
+   * @param array|object $data
+   * @param string       $nodeName
+   * @param string       $key
+   *
+   * @return bool
+   */
+  function appendNode(\DOMNode $parentNode, $data, $nodeName, $key = null)
+  {
+    $node = $this->dom->createElement($nodeName);
+    if (null !== $key) {
+      $node->setAttribute('mykey', $key);
+    }
+    $appendNode = $this->selectNodeType($node, $data);
+    // we may have decided not to append this node, either in error or if its $nodeName is not valid
+    if ($appendNode) {
+      $parentNode->appendChild($node);
+    }
+
+    return $appendNode;
+  }
+
 }

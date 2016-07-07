@@ -2,11 +2,11 @@
 
 namespace Drupal\markaspot_open311\Routing;
 
+use Drupal\Core\Routing\RouteFilterInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Drupal\Core\Routing\RouteFilterInterface;
 
 /**
  * Provides a route filter, which filters by the request format.
@@ -27,15 +27,12 @@ class GeoreportRequestFormatRouteFilter implements RouteFilterInterface {
 
     $current_path = \Drupal::service('path.current')->getPath();
     if (strstr($current_path, 'georeport')) {
-      $format = pathinfo($current_path, PATHINFO_EXTENSION);
       $format = $request->getRequestFormat('html');
 
     }
     else {
       $format = $request->getRequestFormat('html');
     }
-
-
 
     /** @var \Symfony\Component\Routing\Route $route */
     foreach ($collection as $name => $route) {

@@ -7,20 +7,14 @@
 
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
-use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
-use Drupal\rest\ModifiedResourceResponse;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
-use Drupal\Component\Utility\UrlHelper;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Provides a resource to get view modes by entity and bundle.
@@ -68,11 +62,24 @@ class GeoreportRequestResource extends ResourceBase {
     LoggerInterface $logger,
     AccountProxyInterface $current_user) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $logger);
-    $this->config = \Drupal::configFactory()->getEditable('markaspot_open311.settings');
+    $this->config = \Drupal::configFactory()
+      ->getEditable('markaspot_open311.settings');
     $this->currentUser = $current_user;
   }
 
-
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->getParameter('serializer.formats'),
+      $container->get('logger.factory')->get('markaspot_open311'),
+      $container->get('current_user')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -100,7 +107,7 @@ class GeoreportRequestResource extends ResourceBase {
             $collection->add("$route_name.$method.$format_name", $format_route);
 
           }
-        break;
+          break;
 
         default:
           $collection->add("$route_name.$method", $route);
@@ -111,21 +118,24 @@ class GeoreportRequestResource extends ResourceBase {
     return $collection;
   }
 
+  protected function getBaseRoute($canonical_path, $method) {
+    $lower_method = strtolower($method);
 
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $container->getParameter('serializer.formats'),
-      $container->get('logger.factory')->get('markaspot_open311'),
-      $container->get('current_user')
+    $route = new Route($canonical_path, array(
+      '_controller' => 'Drupal\markaspot_open311\GeoreportRequestHandler::handle',
+      // Pass the resource plugin ID along as default property.
+      '_plugin' => $this->pluginId,
+    ), array(
+      '_permission' => "restful $lower_method $this->pluginId",
+    ),
+      array(),
+      '',
+      array(),
+      // The HTTP method is a requirement for this route.
+      array($method)
     );
+    return $route;
   }
-
 
   /**
    * Responds to GET requests.
@@ -176,7 +186,7 @@ class GeoreportRequestResource extends ResourceBase {
     // Checking for service_code and map the code with taxonomy terms:
     if (isset($parameters['service_code'])) {
       // Get the service of the current node:
-      $tid = $map->markaspot_open311_service_map_tax($parameters['service_code']);
+      $tid = $map->markaspot_open311_serviceMapTax($parameters['service_code']);
       $query->condition('field_category.entity.tid', $tid);
     }
 
@@ -191,8 +201,7 @@ class GeoreportRequestResource extends ResourceBase {
     $nodes = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->loadMultiple($nids);
-
-
+    
     // Extensions.
     $extensions = [];
     if (isset($parameters['extensions'])) {
@@ -210,36 +219,18 @@ class GeoreportRequestResource extends ResourceBase {
 
     foreach ($nodes as $node) {
       $status = "closed";
-      $service_requests[] = $map->node_map_request($node, $extensions);
+      $service_requests[] = $map->nodeMapRequest($node, $extensions);
     }
     if (!empty($service_requests)) {
       $response = new ResourceResponse($service_requests, 200);
       $response->addCacheableDependency($service_requests);
 
       return $response;
-    } else {
+    }
+    else {
 
       throw  new \Exception("No Service requests found", 404);
     }
-  }
-  
-  protected function getBaseRoute($canonical_path, $method) {
-    $lower_method = strtolower($method);
-
-    $route = new Route($canonical_path, array(
-      '_controller' => 'Drupal\markaspot_open311\GeoreportRequestHandler::handle',
-      // Pass the resource plugin ID along as default property.
-      '_plugin' => $this->pluginId,
-    ), array(
-      '_permission' => "restful $lower_method $this->pluginId",
-    ),
-      array(),
-      '',
-      array(),
-      // The HTTP method is a requirement for this route.
-      array($method)
-    );
-    return $route;
   }
 
 }

@@ -7,27 +7,17 @@ namespace Drupal\markaspot_open311\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\taxonomy\Entity\Term;
-
 
 /**
  * Configure georeport settings for this site.
  */
 class MarkaspotOpen311SettingsForm extends ConfigFormBase {
+
   /**
    * {@inheritdoc}
    */
   public function getFormId() {
     return 'markaspot_open311_admin_settings';
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getEditableConfigNames() {
-    return [
-      'markaspot_open311.settings',
-    ];
   }
 
   /**
@@ -48,23 +38,22 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Bundle'),
       '#default_value' => 'service_request',
-      '#description' =>  t('Match the service request to a Drupal content-type (machine_name) of your choice')
+      '#description' => t('Match the service request to a Drupal content-type (machine_name) of your choice')
     );
 
     $form['markaspot_open311']['tax_category'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Bundle'),
       '#default_value' => 'service_category',
-      '#description' =>  t('Match the request category to a Drupal vocabulary (machine_name) of your choice')
+      '#description' => t('Match the request category to a Drupal vocabulary (machine_name) of your choice')
     );
 
     $form['markaspot_open311']['tax_status'] = array(
       '#type' => 'textfield',
       '#title' => $this->t('Bundle'),
       '#default_value' => 'service_status',
-      '#description' =>  t('Match the request status to a Drupal vocabulary (machine_name) of your choice')
+      '#description' => t('Match the request status to a Drupal vocabulary (machine_name) of your choice')
     );
-
 
     $form['markaspot_open311']['contact'] = array(
       '#type' => 'textarea',
@@ -95,7 +84,7 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
 
     $form['markaspot_open311']['status_open_start'] = array(
       '#type' => 'select',
-      '#multiple' => TRUE,
+      '#multiple' => FALSE,
       '#options' => self::get_taxonomy_term_options(
         $this->config('markaspot_open311.settings')->get('tax_status')),
       '#default_value' => $config->get('status_open_start'),
@@ -124,6 +113,34 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
   }
 
   /**
+   * Helper function to get taxonomy term options for select widget.
+   *
+   * @parameter string $machine_name
+   *   Taxonomy machine name.
+   *
+   * @return array
+   *   Select options for form
+   */
+  function get_taxonomy_term_options($machine_name) {
+    $options = array();
+
+    // $vid = taxonomy_vocabulary_machine_name_load($machine_name)->vid;
+    $vid = $machine_name;
+    $options_source = \Drupal::entityTypeManager()
+      ->getStorage('taxonomy_term')
+      ->loadTree($vid);
+
+
+    foreach ($options_source as $item) {
+      $key = $item->tid;
+      $value = $item->name;
+      $options[$key] = $value;
+    }
+
+    return $options;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -141,37 +158,18 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
       ->set('bundle', $values['bundle'])
       ->set('tax_category', $values['tax_category'])
       ->set('tax_status', $values['tax_status'])
-
-
       ->save();
 
     parent::submitForm($form, $form_state);
   }
 
   /**
-   * helper function to get taxonomy term options for select widget
-   * @parameter String $machine_name
-   *  taxonomy machine name
-   * @return array
-   *  Select options for form
+   * {@inheritdoc}
    */
-  function get_taxonomy_term_options($machine_name){
-    $options = array();
-
-    // $vid = taxonomy_vocabulary_machine_name_load($machine_name)->vid;
-    $vid = $machine_name;
-    $options_source = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($vid);
-
-
-    foreach($options_source as $item ) {
-      $key = $item->tid;
-      $value = $item->name;
-      $options[$key] = $value;
-    }
-
-    return $options;
+  protected function getEditableConfigNames() {
+    return [
+      'markaspot_open311.settings',
+    ];
   }
-
-
 }
-?>
+

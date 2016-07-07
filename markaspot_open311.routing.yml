@@ -1,11 +1,3 @@
-markaspot_open311.default_controller:
-  path: 'markaspot_open311/{name}'
-  defaults:
-    _controller: '\Drupal\markaspot_open311\Controller\DefaultController::hello'
-    _title: 'markaspot_open311 Title'
-  requirements:
-    _permission: 'access content'
-
 markaspot_open311.settings:
   path: '/admin/structure/markaspot/open311/settings'
   defaults:
