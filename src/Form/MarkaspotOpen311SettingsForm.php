@@ -1,8 +1,5 @@
 <?php
-/**
- * @file
- * Contains Drupal\markaspot_open311\MarkaspotOpen311Form
- */
+
 namespace Drupal\markaspot_open311\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
@@ -109,6 +106,23 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
       '#title' => t('Please choose the status for closed reports'),
     );
 
+    $form['markaspot_open311']['status_open'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#options' => self::get_taxonomy_term_options(
+        $this->config('markaspot_open311.settings')->get('tax_status')),
+      '#default_value' => $config->get('status_open'),
+      '#title' => t('Please choose the status for open reports'),
+    );
+
+    $form['markaspot_open311']['nid-limit'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Limit settings'),
+      '#default_value' => $config->get('nid-limit'),
+      '#description' => t('Set the maximum number of requests by nids.'),
+    );
+
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -158,6 +172,8 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
       ->set('bundle', $values['bundle'])
       ->set('tax_category', $values['tax_category'])
       ->set('tax_status', $values['tax_status'])
+      ->set('nid-limit', $values['nid-limit'])
+
       ->save();
 
     parent::submitForm($form, $form_state);

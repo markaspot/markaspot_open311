@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\markaspot_open311\Plugin\rest\resource\GeoreportRequestRestResouce.
- */
-
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
 use Drupal\Component\Utility\UrlHelper;

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\markaspot_open311\Plugin\rest\resource\GeoreportRequestRestResouce.
- */
-
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
 use Drupal\Component\Utility\UrlHelper;
@@ -193,10 +188,18 @@ class GeoreportRequestIndexResource extends ResourceBase {
       $is_admin = ($parameters['key'] == \Drupal::state()
           ->get('system.cron_key'));
     }
+
     // Handle limit parameters for user one and other users.
     $limit = (isset($is_admin)) ? NULL : 25;
     $query_limit = (isset($parameters['limit'])) ? $parameters['limit'] : NULL;
     $limit = (isset($query_limit) && $query_limit <= 50) ? $query_limit : $limit;
+
+    if (isset($parameters['nids'])) {
+      $nids = explode(',', $parameters['nids']);
+      $query->condition('nid', $nids, 'IN');
+      $limit = $this->config->get('limit-nids');
+    }
+
     if ($limit) {
       $query->pager($limit);
     }
@@ -216,10 +219,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
       // Get the service of the current node:
       $query->condition('uuid', $parameters['id']);
     }
-    if (isset($parameters['nids'])) {
-      $nids = explode(',', $parameters['nids']);
-      $query->condition('nid', $nids, 'IN');
-    }
+
     // Checking for service_code and map the code with taxonomy terms:
     if (isset($parameters['q'])) {
       // Get the service of the current node:

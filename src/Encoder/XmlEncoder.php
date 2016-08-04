@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\serialization\Encoder\XmlEncoder.
- */
-
 namespace Drupal\markaspot_open311\Encoder;
 
 use Symfony\Component\Serializer\Encoder\EncoderInterface;

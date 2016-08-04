@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\markaspot_open311\Plugin\rest\resource\GeoreportServiceRestResouce.
- */
-
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
 use Drupal\Core\Session\AccountProxyInterface;
