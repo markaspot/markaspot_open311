@@ -13,5 +13,5 @@
     "source": "http://cgit.drupalcode.org/markaspot_open311"
   },
   "require": {
-    "markaspot/api_key_auth": "*@dev",
+    "markaspot/api_key_auth": "*@dev"
   }}
