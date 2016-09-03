@@ -174,22 +174,11 @@ class GeoreportProcessor {
    */
   public function getTaxonomyTree($vocabulary = "tags", $parent = 0, $max_depth = NULL) {
     // Load terms.
-    $tree = \Drupal::entityTypeManager()
-      ->getStorage('taxonomy_term')
-      ->loadTree($vocabulary, $parent, $max_depth);
 
-    $entity_type_id = 'taxonomy_term';
-    $bundle = $vocabulary;
-    foreach (\Drupal::entityTypeManager()
-               ->getFieldDefinitions($entity_type_id, $bundle) as $field_name => $field_definition) {
-      if (!empty($field_definition->getTargetBundle())) {
-        $bundleFields[$entity_type_id][$field_name]['type'] = $field_definition->getType();
-        $bundleFields[$entity_type_id][$field_name]['label'] = $field_definition->getLabel();
-      }
-    }
-
-    // var_dump($bundleFields);
-
+    $tree = \Drupal::service('entity_type.manager')
+      ->getStorage("taxonomy_term")
+      ->loadTree($vocabulary, $parent, $max_depth, $load_entities = FALSE);
+    
     // Make sure there are terms to work with.
     if (empty($tree)) {
       return [];
