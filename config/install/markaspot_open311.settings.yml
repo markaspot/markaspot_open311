@@ -30,3 +30,4 @@ resources:
       supported_auth:
         - api_key_auth
 link_domain: null
+
