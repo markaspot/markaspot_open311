@@ -148,9 +148,13 @@ class GeoreportProcessor {
     if (isset($request_data['media_url']) && strstr($request_data['media_url'], "http")) {
       $managed = TRUE;
       $file = system_retrieve_file($request_data['media_url'], 'public://', $managed, FILE_EXISTS_RENAME);
+
+      $field_keys['image'] = 'field_request_image';
+
       if ($file !== FALSE) {
-        $values['field_image'] = array(
+        $values[$field_keys['image']] = array(
           'target_id' => $file->id(),
+          'alt' => 'Open311 File',
         );
       }
 
@@ -178,7 +182,7 @@ class GeoreportProcessor {
     $tree = \Drupal::service('entity_type.manager')
       ->getStorage("taxonomy_term")
       ->loadTree($vocabulary, $parent, $max_depth, $load_entities = FALSE);
-    
+
     // Make sure there are terms to work with.
     if (empty($tree)) {
       return [];
