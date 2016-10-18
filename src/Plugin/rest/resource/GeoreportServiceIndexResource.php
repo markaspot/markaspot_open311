@@ -64,6 +64,20 @@ class GeoreportServiceIndexResource extends ResourceBase {
   /**
    * {@inheritdoc}
    */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->getParameter('serializer.formats'),
+      $container->get('logger.factory')->get('markaspot_open311'),
+      $container->get('current_user')
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function routes() {
     $collection = new RouteCollection();
 
@@ -115,20 +129,6 @@ class GeoreportServiceIndexResource extends ResourceBase {
       }
     }
     return $collection;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $container->getParameter('serializer.formats'),
-      $container->get('logger.factory')->get('markaspot_open311'),
-      $container->get('current_user')
-    );
   }
 
   /**

@@ -33,17 +33,3 @@ function markaspot_open311_theme()
 
   return $theme;
 }
-/*
-function markaspot_open311_rest_resource_alter(&$definitions) {
-
-  if (isset($definitions['georeport_request_resource'])) {
-    // We want to handle REST requests regarding nodes with our own plugin
-    // class.
-    $definitions['entity:node']['class'] = 'Drupal\markaspot_open311\Plugin\rest\resource\GeoreportRequestResource';
-    // Serialized nodes should be expanded to my specific node class.
-    $definitions['entity:node']['serialization_class'] = 'Drupal\markaspot_open311\Entity\Georeport';
-  }
-  // We don't want Views to show up in the array of plugins at all.
-  unset($definitions['entity:view']);
-}
-*/

@@ -134,6 +134,12 @@ class GeoreportRequestIndexResource extends ResourceBase {
     return $collection;
   }
 
+  /**
+   * @param string $canonical_path
+   * @param string $method
+   *
+   * @return \Symfony\Component\Routing\Route
+   */
   protected function getBaseRoute($canonical_path, $method) {
     $lower_method = strtolower($method);
 

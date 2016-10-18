@@ -116,8 +116,21 @@ class GeoreportProcessor {
 
     if ($extended == array('anonymous', 'role')) {
       $request['extended_attributes']['author'] = $node->author;
+      $request['extended_attributes']['author'] = $node->field_e_mail->value;
     }
     return $request;
+  }
+
+  public function validate($request_data) {
+
+    if (!\Drupal::service('email.validator')->isValid($request_data['email'])){
+      $this->processsServicesError('E-mail not valid', 400);
+    }
+
+    // todo: More validation like jurisdoction, bbox here.
+
+    return $request_data;
+
   }
 
   /**
@@ -131,13 +144,16 @@ class GeoreportProcessor {
    */
   public function requestMapNode($request_data) {
 
+    // validate some form properties.
+    $request_data = $this->validate($request_data);
+
     $values['type'] = 'service_request';
     $values['title'] = $request_data['service_code'];
     $values['body'] = $request_data['description'];
-    $values['field_email'] = $request_data['email'];
+    $values['field_e_mail'] = $request_data['email'];
     $values['field_geolocation']['lat'] = $request_data['lat'];
     $values['field_geolocation']['lng'] = $request_data['long'];
-
+    $values['field_address'] = $request_data['address_string'];
     // Get Category by service_code.
     $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
     // Status when inserting.
