@@ -87,7 +87,7 @@ class GeoreportProcessor {
 
     $request['lat'] = floatval($node->field_geolocation->lat);
     $request['long'] = floatval($node->field_geolocation->lng);
-
+    $request['address_string'] = $this->formatAddress($node->field_address);
     $request['status'] = $this->taxMapStatus($node->field_status->target_id);
     $request['service_name'] = $this->getTerm($node->field_category->target_id, 'name');
 
@@ -317,6 +317,20 @@ class GeoreportProcessor {
     }
 
     return $status;
+  }
+
+  /**
+   * Format address_string property
+   * @param object $address
+   *   The address field
+   *
+   * @return string $address_string
+   *   The GeoReport address_string property
+   */
+  public function formatAddress($address) {
+    //todo: Format this with conditions and international, make it configurable?
+    $address_string = $address->postal_code . ' ' . $address->locality . ', ' . $address->address_line1 .' ' . $address->address_line2;
+    return trim($address_string);
   }
 
 }
