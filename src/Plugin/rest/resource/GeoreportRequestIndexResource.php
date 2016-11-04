@@ -237,6 +237,26 @@ class GeoreportRequestIndexResource extends ResourceBase {
       $query->condition($group);
     }
 
+
+
+    // start_date param or travel back to 1970
+    $start_timestamp = (isset($parameters['start_date']) && $parameters['start_date'] != '') ? strtotime($parameters['start_date']) : strtotime('01-01-1970');
+    $query->condition('created', $start_timestamp, '>=');
+
+    // End_date param or create a timestamp now:
+    $end_timestamp = (isset($parameters['end_date']) && $parameters['end_date'] != '') ? strtotime($parameters['end_date']) : time();
+    $query->condition('created', $end_timestamp, '<=');
+    $query->sort('created', $direction = 'DESC');
+
+    // Checking for status-parameter and map the code with taxonomy terms:
+    if (isset($parameters['status'])) {
+      // Get the service of the current node:
+      $tid = $map->statusMapTax($parameters['status']);
+      // var_dump($tids);
+      $query->condition('field_status.entity.tid', $tid);
+    }
+
+
     $nids = $query->execute();
     $nodes = \Drupal::entityTypeManager()
       ->getStorage('node')
@@ -280,19 +300,19 @@ class GeoreportRequestIndexResource extends ResourceBase {
    *   Throws exception expected.
    */
   public function post($request_data) {
-    if (!$this->validate($request_data)) {
-      return FALSE;
-    }
-
     try {
 
       $map = new GeoreportProcessor();
       $values = $map->requestMapNode($request_data);
 
-      $node = Node::create($values);
-      // $node->validate();
-      $node->save();
+      // $node = Node::create($values);
+      $node = \Drupal::entityTypeManager()->getStorage('node')->create($values);
 
+      // Make sure it's a content entity.
+      if ($node instanceof \Drupal\Core\Entity\ContentEntityInterface) {
+        $this->validate($node);
+      }
+      $node->save();
       $uuid = $node->uuid();
       $service_request = [];
       if (isset($node)) {
@@ -322,18 +342,20 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
   /**
    * Verifies that the whole entity does not violate any validation constraints.
-   *
+   * Those are defined in markaspot_validate module.
    */
-  protected function validate($request_data) {
+  protected function validate($node) {
     $violations = NULL;
-
     // Remove violations of inaccessible fields as they cannot stem from our
     // changes.
-
+    $violations = $node->validate();
     // var_dump(count($violations));
     if (count($violations) > 0) {
-      $message = "Unprocessable Entity: validation failed.\n";
-      $this->processsServicesError(400, $message);
+      $message = '';
+      foreach ($violations as $violation) {
+        $message .= $violation->getMessage() . '\n';
+      }
+      throw new \Exception($message, 400);
     }
     else {
       return TRUE;
