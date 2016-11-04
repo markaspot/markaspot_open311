@@ -280,12 +280,8 @@ class GeoreportProcessor {
    *   The tid
    */
   public function statusMapTax($status_sub) {
-    //
-    // todo: Maap this for update method.
-    //
-    $terms = \Drupal::entityTypeManager()
-      ->getStorage('taxonomy_term')
-      ->loadByProperties(array('field_status_name' => $status_sub));
+
+    $terms = taxonomy_term_load_multiple_by_name($status_sub);
     $term = reset($terms);
     if ($term != FALSE) {
       $tid = $term->tid->value;
@@ -318,6 +314,27 @@ class GeoreportProcessor {
 
     return $status;
   }
+
+  /**
+   * Mapping requested status to drupal taxonomy.
+   *
+   * @param string $status
+   *   Open311 Service status (can be open, closed).
+   *
+   * @return array
+   *   The array of status term ids
+   */
+  /*
+  public function statusMaptax($status) {
+    if ($status == "open") {
+      $tids = array_values($this->config->get('status_open'));
+    }
+    else {
+      $tids = array_values($this->config->get('status_closed'));
+    }
+
+    return $tids;
+  }*/
 
   /**
    * Format address_string property

@@ -6,6 +6,7 @@ namespace Drupal\markaspot_open311;
 
 use Drupal\Core\Render\RenderContext;
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -113,7 +114,8 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
     if(isset($id_suffix) && $id_suffix[0] != ''){
 
       //$format = $route_match->getRouteObject()->getRequirement('_format') ?: 'json';
-
+      // All about this discussion:
+      // http://www.metaltoad.com/blog/why-drupal-8-wont-ship-with-REST-content-negotiation
       $format_array = explode('.', $id_suffix[0]);
       $format = $format_array[1];
     }
