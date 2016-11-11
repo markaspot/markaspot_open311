@@ -2,10 +2,12 @@
 
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\node\Entity\Node;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Psr\Log\LoggerInterface;
@@ -37,6 +39,13 @@ class GeoreportRequestIndexResource extends ResourceBase {
   protected $currentUser;
 
   /**
+   * The devel.settings config object.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  protected $config;
+
+  /**
    * Constructs a Drupal\rest\Plugin\ResourceBase object.
    *
    * @param array $configuration
@@ -58,11 +67,11 @@ class GeoreportRequestIndexResource extends ResourceBase {
     $plugin_definition,
     array $serializer_formats,
     LoggerInterface $logger,
-    AccountProxyInterface $current_user) {
+    AccountProxyInterface $current_user,
+    ConfigFactoryInterface $config) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $logger);
-    $this->config = \Drupal::configFactory()
-      ->getEditable('markaspot_open311.settings');
     $this->currentUser = $current_user;
+    $this->config = $config->get('markaspot_open311.settings');
   }
 
   /**
@@ -75,7 +84,8 @@ class GeoreportRequestIndexResource extends ResourceBase {
       $plugin_definition,
       $container->getParameter('serializer.formats'),
       $container->get('logger.factory')->get('markaspot_open311'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('config.factory')
     );
   }
 
@@ -104,11 +114,11 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
             // Restrict the incoming HTTP Content-type header to the known
             // serialization formats.
-
             $format_route->addRequirements(array('_content_type_format' => implode('|', $this->serializerFormats)));
             $collection->add("$route_name.$method.$format", $format_route);
           }
           break;
+
         case 'GET':
           // Restrict GET and HEAD requests to the media type specified in the
           // HTTP Accept headers.
@@ -118,7 +128,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
               // Expose one route per available format.
               $format_route = clone $route;
-              // create path with format.name
+              // Create path with format.name.
               $format_route->setPath($format_route->getPath() . '.' . $format);
               $collection->add("$route_name.$method.$format", $format_route);
             }
@@ -174,9 +184,10 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
     $permission = 'access GET georeport resource';
     if(!$this->currentUser->hasPermission($permission)) {
-      throw new AccessDeniedHttpException("Unauthorized can't proceed with create_request.");
+    throw new AccessDeniedHttpException
+    ("Unauthorized can't proceed with create_request.");
     }
-    */
+     */
     $parameters = UrlHelper::filterQueryParameters(\Drupal::request()->query->all());
 
     // Filtering the configured content type.
@@ -188,11 +199,11 @@ class GeoreportRequestIndexResource extends ResourceBase {
       ->condition('type', $bundle);
 
     $query->sort('changed', 'desc');
-    // Checking for a limit parameter:
 
+    // Checking for a limit parameter:
     if (isset($parameters['key'])) {
       $is_admin = ($parameters['key'] == \Drupal::state()
-          ->get('system.cron_key'));
+        ->get('system.cron_key'));
     }
 
     // Handle limit parameters for user one and other users.
@@ -237,9 +248,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
       $query->condition($group);
     }
 
-
-
-    // start_date param or travel back to 1970
+    // start_date param or travel back to 1970.
     $start_timestamp = (isset($parameters['start_date']) && $parameters['start_date'] != '') ? strtotime($parameters['start_date']) : strtotime('01-01-1970');
     $query->condition('created', $start_timestamp, '>=');
 
@@ -255,7 +264,6 @@ class GeoreportRequestIndexResource extends ResourceBase {
       // var_dump($tids);
       $query->condition('field_status.entity.tid', $tid);
     }
-
 
     $nids = $query->execute();
     $nodes = \Drupal::entityTypeManager()
@@ -305,15 +313,42 @@ class GeoreportRequestIndexResource extends ResourceBase {
       $map = new GeoreportProcessor();
       $values = $map->requestMapNode($request_data);
 
-      // $node = Node::create($values);
       $node = \Drupal::entityTypeManager()->getStorage('node')->create($values);
 
       // Make sure it's a content entity.
-      if ($node instanceof \Drupal\Core\Entity\ContentEntityInterface) {
+      if ($node instanceof ContentEntityInterface) {
         $this->validate($node);
       }
+
+      // Add an intitial paragraph on post.
+      $status_open = array_values($this->config->get('status_open_start'));
+      // todo: put this in config.
+      $status_note_initial = t('The service request has been created.');
+
+      $paragraph = Paragraph::create([
+        'type' => 'status',
+        'field_status_note' => array(
+          "value"  => $status_note_initial,
+          "format" => "full_html",
+        ),
+        'field_status_term' => array(
+          "target_id"  => $status_open[0],
+        ),
+      ]);
+      $paragraph->save();
+
+      $node->field_status_notes = array(
+        array(
+          'target_id' => $paragraph->id(),
+          'target_revision_id' => $paragraph->getRevisionId(),
+        ),
+      );
+
+      // Save the node and prepare response;.
       $node->save();
+      // Get the UUID to put it into the response.
       $uuid = $node->uuid();
+
       $service_request = [];
       if (isset($node)) {
         $service_request['service_requests']['request']['service_request_id'] = $uuid;
@@ -321,12 +356,12 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
       $this->logger->notice('Created entity %type with ID %uuid.', array(
         '%type' => $node->getEntityTypeId(),
-        '%uuid' => $node->uuid()
+        '%uuid' => $node->uuid(),
       ));
 
-      // 201 Created responses return the newly created entity in the response
-      // body.
-      // $url = $entity->urlInfo('canonical', ['absolute' => TRUE])->toString(TRUE);
+      // 201 Created responses return the newly created entity in the response.
+      // $url = $entity->urlInfo('canonical', [
+      //  'absolute' => TRUE])->toString(TRUE);
       $response = new ResourceResponse($service_request, 201);
       $response->addCacheableDependency($service_request);
 
@@ -348,6 +383,11 @@ class GeoreportRequestIndexResource extends ResourceBase {
     $violations = NULL;
     // Remove violations of inaccessible fields as they cannot stem from our
     // changes.
+    /*
+    if (!\Drupal::service('email.validator')->isValid($request_data['email'])){
+    $this->processsServicesError('E-mail not valid', 400);
+    }
+     */
     $violations = $node->validate();
     // var_dump(count($violations));
     if (count($violations) > 0) {

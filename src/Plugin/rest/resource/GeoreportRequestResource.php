@@ -214,7 +214,7 @@ class GeoreportRequestResource extends ResourceBase {
 
     foreach ($nodes as $node) {
       $status = "closed";
-      $service_requests[] = $map->nodeMapRequest($node, $extensions);
+      $service_requests[] = $map->nodeMapRequest($node, $extensions, $id);
     }
     if (!empty($service_requests)) {
       $response = new ResourceResponse($service_requests, 200);

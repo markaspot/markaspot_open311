@@ -88,7 +88,6 @@ class GeoreportProcessor {
     $request['lat'] = floatval($node->field_geolocation->lat);
     $request['long'] = floatval($node->field_geolocation->lng);
     $request['address_string'] = $this->formatAddress($node->field_address);
-    $request['status'] = $this->taxMapStatus($node->field_status->target_id);
     $request['service_name'] = $this->getTerm($node->field_category->target_id, 'name');
 
     $request['requested_datetime'] = date('c', $node->created->value);
@@ -100,6 +99,16 @@ class GeoreportProcessor {
       $request['media_url'] = $image_uri;
     }
 
+    // Checking latest paragraph entity item for publish the official status.
+    if (isset($node->field_status_notes)) {
+      // Access the paragraph entity.
+      foreach ($node->field_status_notes as $note) {
+        // All properties as always: = $note->entity.
+        // See below for accessing a detailed history of the service request.
+        $request['status_note'] = $note->entity->field_status_note->value;
+        $request['status'] = $this->taxMapStatus($note->entity->field_status_term->target_id);
+      }
+    }
     $service_code = $this->getTerm($node->field_category->target_id, 'field_service_code');
     $request['service_code'] = isset($service_code) ? $service_code : NULL;
 
@@ -109,8 +118,25 @@ class GeoreportProcessor {
         $request['extended_attributes']['markaspot']['nid'] = $node->nid->value;
         $request['extended_attributes']['markaspot']['category_hex'] = Term::load($node->field_category->target_id)->field_category_hex->color;
         $request['extended_attributes']['markaspot']['category_icon'] = Term::load($node->field_category->target_id)->field_category_icon->value;
-        $request['extended_attributes']['markaspot']['status_hex'] = Term::load($node->field_status->target_id)->field_status_hex->color;
-        $request['extended_attributes']['markaspot']['status_icon'] = Term::load($node->field_status->target_id)->field_status_icon->value;
+        if (isset($node->field_status_notes)) {
+          foreach ($node->field_status_notes as $note) {
+
+            $request['extended_attributes']['markaspot']['status_hex'] = Term::load($note->entity->field_status_term->target_id)->field_status_hex->color;
+            $request['extended_attributes']['markaspot']['status_icon'] = Term::load($note->entity->field_status_term->target_id)->field_status_icon->value;
+
+          }
+
+          // Access the paragraph entity.
+          $logCount = 0;
+          foreach ($node->field_status_notes as $note) {
+            $logCount++;
+            // All properties as always: = $note->entity.
+            $request['extended_attributes']['markaspot']["log"][$logCount]['status_note'] = $note->entity->field_status_note->value;
+            $request['extended_attributes']['markaspot']["log"][$logCount]['status'] = $this->taxMapStatus($note->entity->field_status_term->target_id);
+            $request['extended_attributes']['markaspot']["log"][$logCount]['updated_datetime'] =  date('c', $note->entity->created->value);
+          }
+        }
+
       }
     }
 
@@ -119,18 +145,6 @@ class GeoreportProcessor {
       $request['extended_attributes']['author'] = $node->field_e_mail->value;
     }
     return $request;
-  }
-
-  public function validate($request_data) {
-
-    if (!\Drupal::service('email.validator')->isValid($request_data['email'])){
-      $this->processsServicesError('E-mail not valid', 400);
-    }
-
-    // todo: More validation like jurisdoction, bbox here.
-
-    return $request_data;
-
   }
 
   /**
@@ -144,9 +158,6 @@ class GeoreportProcessor {
    */
   public function requestMapNode($request_data) {
 
-    // validate some form properties.
-    $request_data = $this->validate($request_data);
-
     $values['type'] = 'service_request';
     $values['title'] = $request_data['service_code'];
     $values['body'] = $request_data['description'];
@@ -156,9 +167,6 @@ class GeoreportProcessor {
     $values['field_address'] = $request_data['address_string'];
     // Get Category by service_code.
     $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
-    // Status when inserting.
-    $status_open = array_values($this->config->get('status_open_start'));
-    $values['field_status']['target_id'] = $status_open[0];
 
     // File Handling:
     if (isset($request_data['media_url']) && strstr($request_data['media_url'], "http")) {
@@ -194,7 +202,6 @@ class GeoreportProcessor {
    */
   public function getTaxonomyTree($vocabulary = "tags", $parent = 0, $max_depth = NULL) {
     // Load terms.
-
     $tree = \Drupal::service('entity_type.manager')
       ->getStorage("taxonomy_term")
       ->loadTree($vocabulary, $parent, $max_depth, $load_entities = FALSE);
@@ -274,7 +281,7 @@ class GeoreportProcessor {
    * Mapping requested status to drupal taxonomy.
    *
    * @param string $status_sub
-   *   Custom Service status (can be open, closed, or foreign translated term name).
+   *   Custom Service status (can be foreign translated term name).
    *
    * @return int
    *   The tid
