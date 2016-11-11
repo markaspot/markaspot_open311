@@ -19,7 +19,6 @@ function markaspot_open311_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('GeoReport v2 Endpoint') . '</p>';
       return $output;
-    break;
   }
 }
 
