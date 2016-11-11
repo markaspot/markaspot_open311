@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Drupal\markaspot_open311;
-
 
 use Drupal\Core\Render\RenderContext;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\Core\Entity\ContentEntityInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,9 +13,6 @@ use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Drupal\rest\ResourceResponse;
 use \Drupal\Component\Utility\Xss;
-
-
-
 
 /**
  * Acts as intermediate request forwarder for resource plugins.
@@ -62,12 +56,11 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
       $method_settings = $config[$plugin][$request->getMethod()];
       if (empty($method_settings['supported_formats']) || in_array($format, $method_settings['supported_formats'])) {
         $definition = $resource->getPluginDefinition();
-        // $class = $definition['serialization_class'];
+        // $class = $definition['serialization_class'];.
         try {
           $service_request = [];
-          // create service_request data from parameters;
+          // Create service_request data from parameters;.
           $qs = explode('&', Request::normalizeQueryString($received));
-
 
           foreach ($qs as $param) {
             $property = explode('=', $param);
@@ -102,8 +95,8 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
     // All REST routes are restricted to exactly one format, so instead of
     // parsing it out of the Accept headers again, we can simply retrieve the
     // format requirement. If there is no format associated, just pick JSON.
-    // $format = $route_match->getRouteObject()->getRequirement('_format') ?: 'json';
-
+    // $format =
+    // $route_match->getRouteObject()->getRequirement('_format') ?: 'json';.
     $current_path = \Drupal::service('path.current')->getPath();
 
     if (strstr($current_path, 'georeport')) {
@@ -111,9 +104,10 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
     }
 
     // Handle id params requests.
-    if(isset($id_suffix) && $id_suffix[0] != ''){
+    if (isset($id_suffix) && $id_suffix[0] != '') {
 
-      //$format = $route_match->getRouteObject()->getRequirement('_format') ?: 'json';
+      // $format =
+      // $route_match->getRouteObject()->getRequirement('_format') ?: 'json';
       // All about this discussion:
       // http://www.metaltoad.com/blog/why-drupal-8-wont-ship-with-REST-content-negotiation
       $format_array = explode('.', $id_suffix[0]);
@@ -142,7 +136,7 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
       // @todo Add test coverage for language negotiation contexts in
       //   https://www.drupal.org/node/2135829.
       $context = new RenderContext();
-      $output = $this->container->get('renderer')->executeInRenderContext($context, function() use ($serializer, $data, $format) {
+      $output = $this->container->get('renderer')->executeInRenderContext($context, function () use ($serializer, $data, $format) {
         return $serializer->serialize($data, $format);
       });
       $response->setContent($output);
@@ -152,7 +146,7 @@ class GeoreportRequestHandler implements ContainerAwareInterface {
 
       $response->headers->set('Content-Type', $request->getMimeType($format));
       // Add rest settings config's cache tags.
-      // $response->addCacheableDependency($this->container->get('config.factory')->get('rest.settings'));
+      // $response->addCacheableDependency($this->container->get('config.factory')->get('rest.settings'));.
     }
     return $response;
   }

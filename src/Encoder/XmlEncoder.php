@@ -24,7 +24,7 @@ class XmlEncoder implements  EncoderInterface, DecoderInterface {
     $nodes = array(
       'errors' => 'error',
       'services' => 'service',
-      'service_requests' => 'request'
+      'service_requests' => 'request',
     );
 
     return $nodes;

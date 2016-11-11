@@ -317,25 +317,28 @@ class GeoreportRequestIndexResource extends ResourceBase {
 
       // Make sure it's a content entity.
       if ($node instanceof ContentEntityInterface) {
-        $this->validate($node);
+        if ($this->validate($node)) {
+          // Add an intitial paragraph on valid post.
+          $status_open = array_values($this->config->get('status_open_start'));
+          // todo: put this in config.
+          $status_note_initial = t('The service request has been created.');
+
+          $paragraph = Paragraph::create([
+            'type' => 'status',
+            'field_status_note' => array(
+              "value"  => $status_note_initial,
+              "format" => "full_html",
+            ),
+            'field_status_term' => array(
+              "target_id"  => $status_open[0],
+            ),
+          ]);
+          $paragraph->save();
+        }
+
       }
 
-      // Add an intitial paragraph on post.
-      $status_open = array_values($this->config->get('status_open_start'));
-      // todo: put this in config.
-      $status_note_initial = t('The service request has been created.');
 
-      $paragraph = Paragraph::create([
-        'type' => 'status',
-        'field_status_note' => array(
-          "value"  => $status_note_initial,
-          "format" => "full_html",
-        ),
-        'field_status_term' => array(
-          "target_id"  => $status_open[0],
-        ),
-      ]);
-      $paragraph->save();
 
       $node->field_status_notes = array(
         array(

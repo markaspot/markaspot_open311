@@ -84,7 +84,6 @@ class GeoreportRequestResource extends ResourceBase {
 
     $definition = $this->getPluginDefinition();
     $canonical_path = isset($definition['uri_paths']['canonical']) ? $definition['uri_paths']['canonical'] : '/' . strtr($this->pluginId, ':', '/') . '/{id}';
-    // $create_path = isset($definition['uri_paths']['https://www.drupal.org/link-relations/create']) ? $definition['uri_paths']['https://www.drupal.org/link-relations/create'] : '/' . strtr($this->pluginId, ':', '/');
     $route_name = strtr($this->pluginId, ':', '.');
 
     $methods = $this->availableMethods();
@@ -113,6 +112,9 @@ class GeoreportRequestResource extends ResourceBase {
     return $collection;
   }
 
+  /**
+   *
+   */
   protected function getBaseRoute($canonical_path, $method) {
     $lower_method = strtolower($method);
 
@@ -142,32 +144,19 @@ class GeoreportRequestResource extends ResourceBase {
    */
   public function get($id) {
 
-    /*
-     * todo: Check if permission check is needed
-
-    $permission = 'access GET georeport resource';
-    if(!$this->currentUser->hasPermission($permission)) {
-      throw new AccessDeniedHttpException("Unauthorized can't proceed with create_request.");
-    }
-    */
     // var_dump($this->currentUser->getRoles());
-
     // $request = \Drupal::request()->getRequestFormat();
     // $queryString = \Drupal::request()->getQueryString();
-
     $parameters = UrlHelper::filterQueryParameters(\Drupal::request()->query->all());
     // $limit = UrlHelper::parse(\Drupal::request()->getQueryString();
     // $_POST parameters
-    // $request->request->get('name');
-
+    // $request->request->get('name');.
     // Filtering the configured content type.
-    //  $bundle = $this->config->get('bundle');
-
+    //  $bundle = $this->config->get('bundle');.
     $query = \Drupal::entityQuery('node')
       ->condition('status', 1)
       ->condition('changed', REQUEST_TIME, '<');
-    // ->condition('type', $bundle);
-
+    // ->condition('type', $bundle);.
     $query->sort('changed', 'desc');
     $params = explode('.', $id);
     $id = $params[0];
@@ -176,7 +165,7 @@ class GeoreportRequestResource extends ResourceBase {
       $query->condition('uuid', $id);
     }
 
-    $map = new GeoreportProcessor;
+    $map = new GeoreportProcessor();
 
     // Checking for service_code and map the code with taxonomy terms:
     if (isset($parameters['service_code'])) {
@@ -196,7 +185,7 @@ class GeoreportRequestResource extends ResourceBase {
     $nodes = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->loadMultiple($nids);
-    
+
     // Extensions.
     $extensions = [];
     if (isset($parameters['extensions'])) {
