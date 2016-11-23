@@ -12,6 +12,7 @@ use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -295,7 +296,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
       return $response;
     }
     else {
-      throw  new \Exception("No Service requests found", 404);
+      throw new HttpException(404, "No Service requests found");
     }
   }
 
@@ -337,8 +338,6 @@ class GeoreportRequestIndexResource extends ResourceBase {
         }
 
       }
-
-
 
       $node->field_status_notes = array(
         array(
@@ -398,7 +397,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
       foreach ($violations as $violation) {
         $message .= $violation->getMessage() . '\n';
       }
-      throw new \Exception($message, 400);
+      throw new BadRequestHttpException($message);
     }
     else {
       return TRUE;
