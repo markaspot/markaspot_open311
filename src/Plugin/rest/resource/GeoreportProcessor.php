@@ -159,12 +159,12 @@ class GeoreportProcessor {
   public function requestMapNode($request_data) {
 
     $values['type'] = 'service_request';
-    $values['title'] = $request_data['service_code'];
-    $values['body'] = $request_data['description'];
-    $values['field_e_mail'] = $request_data['email'];
-    $values['field_geolocation']['lat'] = $request_data['lat'];
-    $values['field_geolocation']['lng'] = $request_data['long'];
-    $values['field_address'] = $request_data['address_string'];
+    $values['title'] = isset($request_data['service_code']) ? $request_data['service_code'] : '';
+    $values['body'] = isset($request_data['description']) ? $request_data['description'] : '';
+    $values['field_e_mail'] = isset($request_data['email']) ? $request_data['email'] : '';
+    $values['field_geolocation']['lat'] = isset($request_data['lat']) ? $request_data['lat'] : '';
+    $values['field_geolocation']['lng'] = isset($request_data['long']) ? $request_data['long'] : '';
+    $values['field_address'] = isset($request_data['address_string']) ? $request_data['address_string'] : '';
     // Get Category by service_code.
     $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
 
