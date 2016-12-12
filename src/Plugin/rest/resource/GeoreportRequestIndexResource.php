@@ -270,16 +270,14 @@ class GeoreportRequestIndexResource extends ResourceBase {
     $nodes = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->loadMultiple($nids);
-
+    $extended_role = 'anonymous';
     // Extensions.
-    $extensions = [];
     if (isset($parameters['extensions'])) {
-      $extendend_permission = 'access open311 extension';
-      if ($this->currentUser->hasPermission($extendend_permission)) {
-        $extensions = array('anonymous', 'role');
+      if ($this->currentUser->hasPermission('access open311 extension')) {
+        $extended_role = 'user';
       }
-      else {
-        $extensions = array('anonymous');
+      if ($this->currentUser->hasPermission('access open311 advanced properties')) {
+        $extended_role = 'manager';
       }
     }
 
@@ -287,7 +285,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
     $uuid = \Drupal::moduleHandler()->moduleExists('markaspot_uuid');
 
     foreach ($nodes as $node) {
-      $service_requests[] = $map->nodeMapRequest($node, $extensions, $uuid);
+      $service_requests[] = $map->nodeMapRequest($node, $extended_role, $uuid);
     }
     if (!empty($service_requests)) {
       $response = new ResourceResponse($service_requests, 200);

@@ -16,5 +16,11 @@ configuration:
       - json
     supported_auth:
       - cookie
-
+  POST:
+    supported_formats:
+      - xml
+      - form
+      - json
+    supported_auth:
+      - api_key_auth
 
