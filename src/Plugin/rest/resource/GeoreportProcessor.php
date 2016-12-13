@@ -164,15 +164,24 @@ class GeoreportProcessor {
    */
   public function requestMapNode($request_data) {
 
-    $nodes = \Drupal::entityTypeManager()
-      ->getStorage('node')
-      ->loadByProperties(array('uuid' => $request_data['service_request_id']));
-    foreach ($nodes as $node) {
-      $uuid = $node->uuid->value;
+    if(isset($request_data['service_request_id'])) {
+      $nodes = \Drupal::entityTypeManager()
+        ->getStorage('node')
+        ->loadByProperties(array('uuid' => $request_data['service_request_id']));
+      foreach ($nodes as $node) {
+        $uuid = $node->uuid->value;
+      }
+      if (isset($uuid)) {
+        $request_data['requested_datetime'] = date('c', $node->created->value);
+      } else {
+        $this->processsServicesError(t('Property service_request_id provided, but corresponding id not found for update'), 400);
+      }
     }
 
+    $values['node'] = $node;
+
     $values['type'] = 'service_request';
-    if (!isset($uuid)) {
+    if (isset($uuid)) {
       $values['uuid'] = $request_data['service_request_id'];
     }
     $values['title'] = isset($request_data['service_code']) ? $request_data['service_code'] : '';
@@ -199,7 +208,7 @@ class GeoreportProcessor {
     $values['created'] = isset($request_data['requested_datetime']) ? strtotime($request_data['requested_datetime']) : NULL;
 
     // This wont work with entity->save().
-    $values['changed'] = isset($request_data['updated_datetime']) ? strtotime($request_data['updated_datetime']) : $request_data['requested_datetime'];
+    $values['changed'] = isset($request_data['updated_datetime']) ? strtotime($request_data['updated_datetime']) :strtotime( $request_data['requested_datetime']);
 
     $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
 

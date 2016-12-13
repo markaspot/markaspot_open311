@@ -3,11 +3,14 @@
 namespace Drupal\markaspot_open311\Plugin\rest\resource;
 
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -20,9 +23,10 @@ use Symfony\Component\Routing\RouteCollection;
  *   label = @Translation("Georeport request"),
  *   serialization_class = "Drupal\Core\Entity\Entity",
  *   uri_paths = {
- *     "canonical" = "/georeport/v2/requests/{id}.json",
- *     "https://www.drupal.org/link-relations/create" = "/georeport/v2/requests/{id}/post",
- *     "defaults"  = {"id": ""},
+ *     "canonical" = "/georeport/v2/requests/{id}",
+ *     "https://www.drupal.org/link-relations/create" =
+ *   "/georeport/v2/requests/{id}",
+ *     "defaults"  = {"_format": "json"},
  *   }
  * )
  */
@@ -96,7 +100,7 @@ class GeoreportRequestResource extends ResourceBase {
           foreach ($this->serializerFormats as $format_name) {
             $format_route = clone $route;
 
-            #$format_route->setPath($create_path . '.' . $format_name);
+            // $format_route->setPath($create_path . '.' . $format_name);.
             $format_route->setRequirement('_access_rest_csrf', 'FALSE');
 
             // Restrict the incoming HTTP Content-type header to the known
@@ -105,6 +109,7 @@ class GeoreportRequestResource extends ResourceBase {
             $collection->add("$route_name.$method.$format_name", $format_route);
           }
           break;
+
         case 'GET':
           // Restrict GET and HEAD requests to the media type specified in the
           // HTTP Accept headers.
@@ -159,35 +164,15 @@ class GeoreportRequestResource extends ResourceBase {
    */
   public function get($id) {
 
-    // var_dump($this->currentUser->getRoles());
-    // $request = \Drupal::request()->getRequestFormat();
-    // $queryString = \Drupal::request()->getQueryString();
     $parameters = UrlHelper::filterQueryParameters(\Drupal::request()->query->all());
-    // $limit = UrlHelper::parse(\Drupal::request()->getQueryString();
-    // $_POST parameters
-    // $request->request->get('name');.
-    // Filtering the configured content type.
-    //  $bundle = $this->config->get('bundle');.
-    $query = \Drupal::entityQuery('node')
-      ->condition('status', 1)
-      ->condition('changed', REQUEST_TIME, '<');
-    // ->condition('type', $bundle);.
-    $query->sort('changed', 'desc');
-    $params = explode('.', $id);
-    $id = $params[0];
 
+    $query = \Drupal::entityQuery('node')
+      ->condition('status', 1);
     if ($id != "") {
-      $query->condition('uuid', $id);
+      $query->condition('uuid', $this->getRequestId($id));
     }
 
     $map = new GeoreportProcessor();
-
-    // Checking for service_code and map the code with taxonomy terms:
-    if (isset($parameters['service_code'])) {
-      // Get the service of the current node:
-      $tid = $map->markaspot_open311_serviceMapTax($parameters['service_code']);
-      $query->condition('field_category.entity.tid', $tid);
-    }
 
     // Checking for service_code and map the code with taxonomy terms:
     if (isset($parameters['id'])) {
@@ -231,7 +216,6 @@ class GeoreportRequestResource extends ResourceBase {
     }
   }
 
-
   /**
    * Responds to POST requests.
    *
@@ -243,65 +227,41 @@ class GeoreportRequestResource extends ResourceBase {
   public function post($id, $request_data) {
     try {
 
-      $map = new GeoreportProcessor();
-      $request_data['service_request_id'] = $this->getRequestId($id);
-      $values = $map->requestMapNode($request_data);
-
-      $node = \Drupal::entityTypeManager()->getStorage('node')->create($values);
-
-      // Make sure it's a content entity.
-      if ($node instanceof ContentEntityInterface) {
-        if ($this->validate($node)) {
-          // Add an intitial paragraph on valid post.
-          $status_open = array_values($this->config->get('status_open_start'));
-          // todo: put this in config.
-          $status_note_initial = t('The service request has been created.');
-
-          $paragraph = Paragraph::create([
-            'type' => 'status',
-            'field_status_note' => array(
-              "value"  => $status_note_initial,
-              "format" => "full_html",
-            ),
-            'field_status_term' => array(
-              "target_id"  => $status_open[0],
-            ),
-          ]);
-          $paragraph->save();
-        }
-
+      if (!$this->currentUser->hasPermission('access open311 advanced properties')) {
+        throw new AccessDeniedHttpException();
       }
 
-      $node->field_status_notes = array(
-        array(
-          'target_id' => $paragraph->id(),
-          'target_revision_id' => $paragraph->getRevisionId(),
-        ),
-      );
+      $map = new GeoreportProcessor();
+      $uuid = $this->getRequestId($id);
+
+      $request_data['service_request_id'] = $uuid;
+      $values = $map->requestMapNode($request_data);
+
+      // Retrvieve the preloaded node object.
+      $node = $values['node'];
+      unset($values['node']);
+
+      foreach (array_keys($values) as $field_name) {
+        $node->set($field_name, $values[$field_name]);
+
+      }
+      // todo: add validation:
+      $node->save();
 
       // Save the node and prepare response;.
-      $node->save();
-      // Get the UUID to put it into the response.
       $uuid = $node->uuid();
+
+      $this->logger->notice('Updated node with ID %uuid.', array(
+        '%uuid' => $node->uuid(),
+      ));
 
       $service_request = [];
       if (isset($node)) {
         $service_request['service_requests']['request']['service_request_id'] = $uuid;
       }
-
-      $this->logger->notice('Created entity %type with ID %uuid.', array(
-        '%type' => $node->getEntityTypeId(),
-        '%uuid' => $node->uuid(),
-      ));
-
-      // 201 Created responses return the newly created entity in the response.
-      // $url = $entity->urlInfo('canonical', [
-      //  'absolute' => TRUE])->toString(TRUE);
       $response = new ResourceResponse($service_request, 201);
       $response->addCacheableDependency($service_request);
 
-      // Responses after creating an entity are not cacheable, so we add no
-      // cacheability metadata here.
       return $response;
     }
     catch (EntityStorageException $e) {
@@ -337,9 +297,8 @@ class GeoreportRequestResource extends ResourceBase {
     }
   }
 
-
   /**
-   * Return the service_request_id
+   * Return the service_request_id.
    *
    * @param $id_param
    *
