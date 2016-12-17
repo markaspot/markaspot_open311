@@ -80,7 +80,7 @@ class GeoreportProcessor {
     else {
       $id = $node->nid->value;
     }
-    $request = array (
+    $request = array(
       'sevicerequest_id' => $id,
       'title' => $node->title->value,
       'description' => $node->body->value,
@@ -123,10 +123,8 @@ class GeoreportProcessor {
 
         if (isset($node->field_status_notes)) {
           foreach ($node->field_status_notes as $note) {
-
             $status['status_hex'] = Term::load($note->entity->field_status_term->target_id)->field_status_hex->color;
             $status['status_icon'] = Term::load($note->entity->field_status_term->target_id)->field_status_icon->value;
-
           }
 
           // Access the paragraph entity.
@@ -139,9 +137,9 @@ class GeoreportProcessor {
             $log['status_notes'][$logCount]['updated_datetime'] = date('c', $note->entity->created->value);
           }
         }
-
-        $request['extended_attributes']['markaspot'] = array_merge($nid, $category, $status,$log);
-
+        $status = (isset($status)) ? $status : [];
+        $log = (isset($log)) ? $log : [];
+        $request['extended_attributes']['markaspot'] = array_merge($nid, $category, $status, $log);
 
       }
     }
@@ -164,7 +162,7 @@ class GeoreportProcessor {
    */
   public function requestMapNode($request_data) {
 
-    if(isset($request_data['service_request_id'])) {
+    if (isset($request_data['service_request_id'])) {
       $nodes = \Drupal::entityTypeManager()
         ->getStorage('node')
         ->loadByProperties(array('uuid' => $request_data['service_request_id']));
@@ -173,7 +171,8 @@ class GeoreportProcessor {
       }
       if (isset($uuid)) {
         $request_data['requested_datetime'] = date('c', $node->created->value);
-      } else {
+      }
+      else {
         $this->processsServicesError(t('Property service_request_id provided, but corresponding id not found for update'), 400);
       }
     }
@@ -208,7 +207,7 @@ class GeoreportProcessor {
     $values['created'] = isset($request_data['requested_datetime']) ? strtotime($request_data['requested_datetime']) : NULL;
 
     // This wont work with entity->save().
-    $values['changed'] = isset($request_data['updated_datetime']) ? strtotime($request_data['updated_datetime']) :strtotime( $request_data['requested_datetime']);
+    $values['changed'] = isset($request_data['updated_datetime']) ? strtotime($request_data['updated_datetime']) : strtotime($request_data['requested_datetime']);
 
     $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
 
