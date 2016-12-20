@@ -204,10 +204,10 @@ class GeoreportProcessor {
     }
 
     // Get Category by service_code.
-    $values['created'] = isset($request_data['requested_datetime']) ? strtotime($request_data['requested_datetime']) : NULL;
+    $values['created'] = isset($request_data['requested_datetime']) ? strtotime($request_data['requested_datetime']) : time();
 
     // This wont work with entity->save().
-    $values['changed'] = isset($request_data['updated_datetime']) ? strtotime($request_data['updated_datetime']) : strtotime($request_data['requested_datetime']);
+    $values['changed'] = isset($request_data['updated_datetime']) ? strtotime($request_data['updated_datetime']) : $values['created'];
 
     $values['field_category']['target_id'] = $this->serviceMapTax($request_data['service_code']);
 

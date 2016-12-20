@@ -395,7 +395,9 @@ class GeoreportRequestIndexResource extends ResourceBase {
       foreach ($violations as $violation) {
         $message .= $violation->getMessage() . '\n';
       }
-      throw new BadRequestHttpException($message);
+      throw new HttpException(400, $message, $e);
+
+      // throw new BadRequestHttpException($message);
     }
     else {
       return TRUE;
