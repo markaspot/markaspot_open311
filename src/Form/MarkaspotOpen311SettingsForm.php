@@ -157,7 +157,6 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
-
     $this->config('markaspot_open311.settings')
       ->set('status_open', $values['status_open'])
       ->set('status_closed', $values['status_closed'])
@@ -171,7 +170,6 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
       ->set('tax_category', $values['tax_category'])
       ->set('tax_status', $values['tax_status'])
       ->set('nid-limit', $values['nid-limit'])
-
       ->save();
 
     parent::submitForm($form, $form_state);

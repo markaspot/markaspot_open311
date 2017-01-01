@@ -389,7 +389,6 @@ class GeoreportRequestIndexResource extends ResourceBase {
     }
      */
     $violations = $node->validate();
-    // var_dump(count($violations));
     if (count($violations) > 0) {
       $message = '';
       foreach ($violations as $violation) {

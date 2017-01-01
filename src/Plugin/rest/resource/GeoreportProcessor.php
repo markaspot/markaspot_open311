@@ -173,7 +173,9 @@ class GeoreportProcessor {
         $request_data['requested_datetime'] = date('c', $node->created->value);
       }
       else {
-        $this->processsServicesError(t('Property service_request_id provided, but corresponding id not found for update'), 400);
+        // After initital import
+        // toDo: Make this configurable depending on enabled method (update),
+        // $this->processsServicesError(t('Property service_request_id provided, but corresponding id not found for update'), 400);
       }
     }
 
