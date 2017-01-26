@@ -16,17 +16,17 @@ use Symfony\Component\Routing\RouteCollection;
  * Provides a resource to get view modes by entity and bundle.
  *
  * @RestResource(
- *   id = "georeport_service_index_resource",
- *   label = @Translation("Georeport service index"),
+ *   id = "georeport_discovery_resource",
+ *   label = @Translation("Georeport service discovery"),
  *   serialization_class = "Drupal\Core\Entity\Entity",
  *   uri_paths = {
- *     "canonical" = "/georeport/v2/services",
- *     "https://www.drupal.org/link-relations/create" = "/georeport/v2/services",
+ *     "canonical" = "/georeport/v2/discovery",
+ *     "https://www.drupal.org/link-relations/create" = "/georeport/v2/discovery",
  *     "defaults"  = {"_format": "json"},
  *   }
  * )
  */
-class GeoreportServiceIndexResource extends ResourceBase {
+class GeoreportDiscoveryResource extends ResourceBase {
   /**
    * A current user instance.
    *
@@ -92,21 +92,6 @@ class GeoreportServiceIndexResource extends ResourceBase {
     foreach ($methods as $method) {
       $route = $this->getBaseRoute($canonical_path, $method);
       switch ($method) {
-        case 'POST':
-          $georeport_formats = array('json', 'xml');
-          foreach ($georeport_formats as $format) {
-            $format_route = clone $route;
-
-            $format_route->setPath($create_path . '.' . $format);
-            $format_route->setRequirement('_access_rest_csrf', 'FALSE');
-
-            // Restrict the incoming HTTP Content-type header to the known
-            // serialization formats.
-            $format_route->addRequirements(array('_content_type_format' => implode('|', $this->serializerFormats)));
-            $collection->add("$route_name.$method.$format", $format_route);
-          }
-          break;
-
         case 'GET':
           // Restrict GET and HEAD requests to the media type specified in the
           // HTTP Accept headers.
@@ -143,14 +128,14 @@ class GeoreportServiceIndexResource extends ResourceBase {
   public function get() {
 
     $map = new GeoreportProcessor();
-    $services = $map->getTaxonomyTree('service_category');
-    if (!empty($services)) {
-      $response = new ResourceResponse($services, 200);
-      $response->addCacheableDependency($services);
+    $discovery = $map->getDiscovery();
+    if (!empty($discovery)) {
+      $response = new ResourceResponse($discovery, 200);
+      $response->addCacheableDependency($discovery);
       return $response;
     }
     else {
-      throw new HttpException(404, "Service code not found");
+      throw new HttpException(404, "Service Discovery not found");
     }
   }
 

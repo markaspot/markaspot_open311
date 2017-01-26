@@ -272,6 +272,7 @@ class GeoreportRequestResource extends ResourceBase {
 
   /**
    * Verifies that the whole entity does not violate any validation constraints.
+   *
    * Those are defined in markaspot_validate module.
    */
   protected function validate($node) {
@@ -302,7 +303,8 @@ class GeoreportRequestResource extends ResourceBase {
    *
    * @param $id_param
    *
-   * @return string if
+   * @return string
+   *   The Request ID
    */
   public function getRequestId($id_param) {
     $param = explode('.', $id_param);

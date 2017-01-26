@@ -27,6 +27,16 @@ class GeoreportProcessor {
   }
 
   /**
+   * Get discovery from congiguration.
+   *
+   * @return object
+   *   Return Open or Closed Status according to specification.
+   */
+  public function getDiscovery() {
+    return $this->config->get('discovery');
+  }
+
+  /**
    * Process errors with http status codes.
    *
    * @param string $message
@@ -234,11 +244,14 @@ class GeoreportProcessor {
 
   /**
    * Parse an address_string to an array.
-   * todo: make this reusable for any country.
+   *
+   * Todo: make this reusable for any country.
    *
    * @param string $address_string
+   *   The address as string.
    *
-   * @return array $address
+   * @return array
+   *   Return address
    */
   private function addressParser($address_string) {
 

@@ -25,6 +25,7 @@ class XmlEncoder implements  EncoderInterface, DecoderInterface {
       'errors' => 'error',
       'services' => 'service',
       'service_requests' => 'request',
+      'discovery' => 'discovery'
     );
 
     return $nodes;
@@ -37,14 +38,15 @@ class XmlEncoder implements  EncoderInterface, DecoderInterface {
     if ($data instanceof \DOMDocument) {
       return $data->saveXML();
     }
-
     // Checking passed data for keywords resulting in different root_nodes.
     if (NULL !=  array_key_exists('error', $data)) {
       $context['xml_root_node_name'] = "errors";
 
-    } elseif (array_key_exists('metadata', $data[0])){
+    } elseif (isset($data[0]) && array_key_exists('metadata', $data[0])){
       $context['xml_root_node_name'] = "services";
 
+    } elseif (array_key_exists('changeset', $data)){
+      $context['xml_root_node_name'] = "discovery";
     } else {
       $context['xml_root_node_name'] = "service_requests";
     }
@@ -394,7 +396,8 @@ class XmlEncoder implements  EncoderInterface, DecoderInterface {
 
           } elseif (array_key_exists('metadata', $data)){
             $append = $this->appendNode($parentNode, $data, 'service', $key);
-
+          } elseif (array_key_exists('changeset', $data)){
+            $append = $this->appendNode($parentNode, $data, 'endpoint', $key);
           } else {
             $append = $this->appendNode($parentNode, $data, 'request', $key);
           }

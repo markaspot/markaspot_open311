@@ -8,6 +8,7 @@ class MarkaspotOpen311ServiceProvider extends ServiceProviderBase {
 
   /**
    * {@inheritdoc}
+   *
    * check https://www.drupal.org/node/2026959.
    */
   public function register(ContainerBuilder $container) {
