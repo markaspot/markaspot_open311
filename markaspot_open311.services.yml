@@ -26,3 +26,8 @@ services:
     class: Drupal\markaspot_open311\EventSubscriber\GeoreportException
     tags:
      - { name: event_subscriber }
+  markaspot_open311.georeport_resource_response.subscriber:
+    class: Drupal\markaspot_open311\EventSubscriber\GeoReportResourceResponseSubscriber
+    tags:
+      - { name: event_subscriber }
+    arguments: ['@serializer', '@renderer', '@current_route_match']

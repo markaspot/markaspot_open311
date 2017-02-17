@@ -270,9 +270,13 @@ class GeoreportRequestIndexResource extends ResourceBase {
     $nodes = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->loadMultiple($nids);
-    $extended_role = 'anonymous';
     // Extensions.
+    $extended_role = NULL;
+
     if (isset($parameters['extensions'])) {
+
+      $extended_role = 'anonymous';
+
       if ($this->currentUser->hasPermission('access open311 extension')) {
         $extended_role = 'user';
       }

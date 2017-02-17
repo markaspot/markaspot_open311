@@ -62,7 +62,7 @@ class MarkaspotOpen311SettingsForm extends ConfigFormBase {
     $form['markaspot_open311']['common']['status_open_start'] = array(
       '#type' => 'select',
       '#multiple' => FALSE,
-      '#options' => self::getTaxonomyTerm_Options(
+      '#options' => self::getTaxonomyTermOptions(
         $this->config('markaspot_open311.settings')->get('tax_status')),
       '#default_value' => $config->get('status_open_start'),
       '#title' => t('Choose the status that gets applied when creating reports by third party apps'),
