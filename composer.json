@@ -13,6 +13,6 @@
     "source": "https://github.com/markaspot/markaspot_open311.git"
   },
   "require": {
-    "markaspot/api_key_auth": "*@dev"
+    "drupal/services_api_key_auth": "1.*"
   }
 }

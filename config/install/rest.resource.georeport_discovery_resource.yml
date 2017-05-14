@@ -2,7 +2,7 @@ langcode: en
 status: true
 dependencies:
   module:
-    - api_key_auth
+    - services_api_key_auth
     - markaspot_open311
     - serialization
     - user

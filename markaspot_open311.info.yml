@@ -7,4 +7,4 @@ package: Mark-a-Spot
 dependencies:
   - service_request
   - rest
-  - api_key_auth
+  - services_api_key_auth
