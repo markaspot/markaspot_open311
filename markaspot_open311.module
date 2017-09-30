@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains markaspot_open311.module
+ * Contains markaspot_open311.module.
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -10,7 +10,6 @@ use Drupal\Core\Routing\RouteMatchInterface;
 /**
  * Implements hook_help().
  */
-
 function markaspot_open311_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     // Main module help for the markaspot_open311 module.
@@ -25,9 +24,7 @@ function markaspot_open311_help($route_name, RouteMatchInterface $route_match) {
 /**
  * Implements hook_theme().
  */
-
-function markaspot_open311_theme()
-{
+function markaspot_open311_theme() {
   $theme = [];
 
   return $theme;

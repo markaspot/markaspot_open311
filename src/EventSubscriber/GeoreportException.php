@@ -2,20 +2,23 @@
 
 namespace Drupal\markaspot_open311\EventSubscriber;
 
-
 use Drupal\rest\ResourceResponse;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Class GeoreportException
+ * Class GeoreportException.
+ *
  * @package Drupal\markaspot_open311\EventSubscriber
  */
 class GeoreportException implements EventSubscriberInterface {
 
   private $request;
 
+  /**
+   *
+   */
   public function __construct() {
     $this->request = \Drupal::request();
   }
@@ -23,7 +26,7 @@ class GeoreportException implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  static function getSubscribedEvents() {
+  static public function getSubscribedEvents() {
     $events[KernelEvents::EXCEPTION][] = array('onException');
     return $events;
   }
@@ -45,8 +48,8 @@ class GeoreportException implements EventSubscriberInterface {
       $data = array(
         'error' => array(
           'code' => $exceptionCode,
-          'message' => $exception->getMessage()
-        )
+          'message' => $exception->getMessage(),
+        ),
       );
 
       $request_format = pathinfo($current_path, PATHINFO_EXTENSION);
@@ -60,7 +63,7 @@ class GeoreportException implements EventSubscriberInterface {
         $content = $exception->getMessage();
       }
 
-      //Create response, set status code etc.
+      // Create response, set status code etc.
       $status_code = ($exceptionCode == 0) ? 500 : $exceptionCode;
       $response = new ResourceResponse($content, $status_code);
 

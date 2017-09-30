@@ -2,7 +2,6 @@
 
 namespace Drupal\markaspot_open311\EventSubscriber;
 
-
 use Drupal\Core\Cache\CacheableResponse;
 use Drupal\Core\Cache\CacheableResponseInterface;
 use Drupal\Core\Render\RenderContext;
@@ -72,17 +71,13 @@ class GeoReportResourceResponseSubscriber implements EventSubscriberInterface {
 
     $request = $event->getRequest();
 
-
     $current_path = \Drupal::service('path.current')->getPath();
 
     if (strstr($current_path, 'georeport')) {
       $format = pathinfo($current_path, PATHINFO_EXTENSION);
     }
 
-
-
-
-    // $format = $this->getResponseFormat($this->routeMatch, $request);
+    // $format = $this->getResponseFormat($this->routeMatch, $request);.
     $this->renderResponseBody($request, $response, $this->serializer, $format);
     $event->setResponse($this->flattenResponse($response));
   }

@@ -17,7 +17,7 @@ class GeoreportRequestFormatRouteFilter implements RouteFilterInterface {
    * {@inheritdoc}
    */
   public function applies(Route $route) {
-    // return $route->hasRequirement('_format');
+    // Return $route->hasRequirement('_format');.
   }
 
   /**

@@ -185,7 +185,7 @@ class GeoreportProcessor {
       else {
         // After initital import
         // toDo: Make this configurable depending on enabled method (update),
-        // $this->processsServicesError(t('Property service_request_id provided, but corresponding id not found for update'), 400);
+        // $this->processsServicesError(t('Property service_request_id provided, but corresponding id not found for update'), 400);.
       }
     }
 
