@@ -1,6 +1,6 @@
 services:
   markaspot_open311.serializer.encoder.xml:
-    class: Drupal\markaspot_open311\Encoder\XmlEncoder
+    class: Drupal\markaspot_open311\Encoder\Open311Encoder
     tags:
       - { name: encoder, format: xml }
 
@@ -13,7 +13,7 @@ services:
       - { name: route_filter }
 
   markaspot_open311.serializer.encoder.form:
-    class: Drupal\markaspot_open311\Encoder\XmlEncoder
+    class: Drupal\markaspot_open311\Encoder\Open311Encoder
     tags:
       - { name: encoder, format: form }
 

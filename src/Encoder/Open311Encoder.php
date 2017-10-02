@@ -11,7 +11,7 @@ use Symfony\Component\Serializer\Encoder\DecoderInterface;
  * This acts as a wrapper class for Symfony's XmlEncoder so that it is not
  * implementing NormalizationAwareInterface, and can be normalized externally.
  */
-class XmlEncoder implements EncoderInterface, DecoderInterface {
+class Open311Encoder implements EncoderInterface, DecoderInterface {
   /**
    * @var \DOMDocument
    */
