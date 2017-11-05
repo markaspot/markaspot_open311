@@ -91,7 +91,7 @@ class GeoreportProcessor {
       $id = $node->nid->value;
     }
     $request = array(
-      'sevicerequest_id' => $id,
+      'servicerequest_id' => $id,
       'title' => $node->title->value,
       'description' => $node->body->value,
       'lat' => floatval($node->field_geolocation->lat),
