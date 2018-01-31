@@ -262,7 +262,7 @@ class GeoreportRequestIndexResource extends ResourceBase {
       // Get the service of the current node:
       $tid = $map->statusMapTax($parameters['status']);
       // var_dump($tids);
-      $query->condition('field_status.entity.tid', $tid);
+      $query->condition('field_status_notes.entity.field_status_term', $tid);
     }
 
     $nids = $query->execute();
