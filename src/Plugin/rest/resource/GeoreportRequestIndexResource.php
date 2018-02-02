@@ -257,18 +257,35 @@ class GeoreportRequestIndexResource extends ResourceBase {
     $query->condition('created', $end_timestamp, '<=');
     $query->sort('created', $direction = 'DESC');
 
-    // Checking for status-parameter and map the code with taxonomy terms:
-    if (isset($parameters['status'])) {
-      // Get the service of the current node:
-      $tid = $map->statusMapTax($parameters['status']);
-      // var_dump($tids);
-      $query->condition('field_status_notes.entity.field_status_term', $tid);
-    }
-
     $nids = $query->execute();
     $nodes = \Drupal::entityTypeManager()
       ->getStorage('node')
       ->loadMultiple($nids);
+
+    // Checking for status-parameter and map the code with taxonomy terms. Allowed are only open and closed!
+    if (isset($parameters['status'])) {
+      foreach ($nodes as $key => $node) {
+        $status = 'open';
+        // Checking latest paragraph entity item for publish the official status.
+        if (isset($node->field_status_notes)) {
+          // Access the paragraph entity.
+          foreach ($node->field_status_notes as $note) {
+            // All properties as always: = $note->entity.
+            // See below for accessing a detailed history of the service request.
+            $status = $map->taxMapStatus($note->entity->field_status_term->target_id);
+          }
+        }
+        // If you search for open service_requests, remove closed ones.
+        if ($parameters['status'] == 'open' && $status != 'open') {
+          unset($nodes[$key]);
+        }
+        // If you search for closed service_requests, remove open ones.
+        elseif ($parameters['status'] == 'closed' && $status != 'closed') {
+          unset($nodes[$key]);
+        }
+      }
+    }
+
     // Extensions.
     $extended_role = NULL;
 
