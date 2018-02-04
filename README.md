@@ -1,4 +1,6 @@
-# Mark-a-Spot Open311 
+# Mark-a-Spot Open311 [deprecated]
+
+This module will be moved to Mark-a-Spot Core in 8.4.
 
 This module enables Drupal 8 to become a GeoReport v2 Server. 
 It contains REST Resources for turning Drupal nodes into GeoReport v2 service_requests and 
